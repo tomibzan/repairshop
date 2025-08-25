@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 # ─────────────────────────────
 # Customer
@@ -30,52 +31,55 @@ class Technician(models.Model):
 # Work Order
 # ─────────────────────────────
 class WorkOrder(models.Model):
-    work_order_number = models.CharField(max_length=20, unique=True, blank=True)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    technician = models.ForeignKey(Technician, on_delete=models.SET_NULL, null=True, blank=True)
-
-    date_created = models.DateTimeField(auto_now_add=True)
-    date_updated = models.DateTimeField(auto_now=True)
-    date_collected = models.DateTimeField(null=True, blank=True)
-
+    customer = models.ForeignKey("Customer", on_delete=models.CASCADE)
     product_type = models.CharField(max_length=100)
     product_brand = models.CharField(max_length=100)
     product_model = models.CharField(max_length=100)
-    serial_number = models.CharField(max_length=100, unique=True)
-
+    serial_number = models.CharField(max_length=100, blank=True, null=True)
     issue_description = models.TextField()
-    repair_details = models.TextField(null=True, blank=True)
+    product_image = models.ImageField(upload_to="workorder_images/", blank=True, null=True)
+    work_order_number = models.CharField(max_length=50, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    technician = models.ForeignKey("Technician", on_delete=models.SET_NULL, null=True, blank=True)
+    estimated_cost = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    estimated_completion_date = models.DateField(blank=True, null=True)
     reason_for_not_repairing = models.TextField(null=True, blank=True)
+    date_collected = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(
+        max_length=50,
+        choices=[
+            ("pending", "Pending"),
+            ("in_progress", "In Progress"),
+            ("completed", "Completed"),
+            ("cancelled", "Cancelled"),
+        ],
+        default="pending"
+    )
 
-    estimated_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    estimated_completion_date = models.DateField(null=True, blank=True)
-    total_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-
-    is_repaired = models.BooleanField(null=True, blank=True)
+    is_repaired = models.BooleanField(default=False)
+    repair_details = models.TextField(blank=True, null=True)
+    total_cost = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    not_repaired_reason = models.TextField(blank=True, null=True)
     customer_collected = models.BooleanField(default=False)
-
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('in_progress', 'In Progress'),
-        ('completed', 'Completed'),
-        ('cancelled', 'Cancelled'),
-        ('ready_for_collection', 'Ready for Collection'),
-        ('collected', 'Collected'),
-    ]
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    collected_at = models.DateTimeField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
-        """Auto-generate work order number if missing."""
+        # Auto-generate work order number only once
         if not self.work_order_number:
-            last_wo = WorkOrder.objects.order_by("-id").first()
-            if last_wo and last_wo.work_order_number.startswith("WO"):
-                last_number = int(last_wo.work_order_number[2:])
+            year = timezone.now().year
+            last_order = WorkOrder.objects.filter(
+                created_at__year=year
+            ).order_by("id").last()
+            
+            if last_order and last_order.work_order_number:
+                last_number = int(last_order.work_order_number.split("-")[-1])
+                new_number = last_number + 1
             else:
-                last_number = 1000
-            new_number = last_number + 1
-            if new_number > 9999:
-                raise ValueError("Maximum work order number reached (9999)")
-            self.work_order_number = f"WO{new_number}"
+                new_number = 1
+
+            self.work_order_number = f"WO-{year}-{new_number:04d}"
+
         super().save(*args, **kwargs)
 
     def __str__(self):
