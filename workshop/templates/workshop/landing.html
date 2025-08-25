@@ -1,0 +1,26 @@
+{% extends "workshop/base.html" %}
+{% block title %}Welcome to Ethiofolks' Repair Shop{% endblock %}
+
+{% block content %}
+<div class="text-center">
+  <h1 class="mb-4">Welcome to Ethiofolks' Repair Shop</h1>
+  
+  <!-- Search Form -->
+  <form method="get" action="{% url 'workshop:search' %}" class="mb-5">
+    <div class="input-group mb-3">
+      <input type="text" name="q" class="form-control" placeholder="Enter Work Order # or Phone/Email">
+      <button class="btn btn-primary" type="submit">Check Status</button>
+    </div>
+  </form>
+
+  <!-- Welcome Content -->
+  <div class="landing">
+    <h2>ወደጥገና ማዕከላችን እንኳን ደህና መጡ</h2>
+    <p>We Care for What You Care About</p>
+    
+    <a href="{% url 'admin:index' %}" class="btn btn-primary">
+      Go to Admin Login
+    </a>
+  </div>
+</div>
+{% endblock %}

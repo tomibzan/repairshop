@@ -1,0 +1,18 @@
+{% extends "workshop/base.html" %}
+{% block title %}Search Results{% endblock %}
+{% block content %}
+  <h2>Work Order Results</h2>
+  {% if workorders %}
+    <ul class="list-group">
+      {% for order in workorders %}
+        <li class="list-group-item">
+          <a href="{% url 'workshop:workorder_detail' order.id %}">
+            Work Order #{{ order.id }} – {{ order.status }}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No work orders found.</p>
+  {% endif %}
+{% endblock %}
