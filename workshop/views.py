@@ -1,3 +1,4 @@
+import re
 from django.shortcuts import render
 from rest_framework import viewsets, filters
 from rest_framework.decorators import action
@@ -11,17 +12,62 @@ from .serializers import (
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import WorkOrderFilter
+from django.db.models import Q
+
+
+def normalize_phone(phone: str) -> str:
+    """Normalize Ethiopian phone numbers for search consistency."""
+    if not phone:
+        return ""
+    digits = re.sub(r"\D", "", phone)
+
+    # Handle common Ethiopian formats
+    if digits.startswith("0"):             # e.g. 0912...
+        return "+251" + digits[1:]
+    elif digits.startswith("251"):         # e.g. 251912...
+        return "+" + digits
+    elif digits.startswith("9") and len(digits) == 9:  # e.g. 912...
+        return "+251" + digits
+    return phone  # fallback (maybe already in +251...)
 
 
 def landing(request):
-    return render(request, "workshop/landing.html")
+    q = request.GET.get("q", "").strip()
+    results = []
+    searched = False
 
+    if q:
+        searched = True
+
+        normalized_phone = normalize_phone(q)
+
+        qs = (
+            WorkOrder.objects
+            .select_related("customer", "technician")
+            .order_by("-created_at" if hasattr(WorkOrder, "created_at") else "-id")
+        )
+
+        filters = Q(customer__email__iexact=q)
+        if normalized_phone:
+            filters |= Q(customer__phone_number__icontains=normalized_phone)
+
+        results = qs.filter(filters)
+
+    return render(
+        request,
+        "workshop/landing.html",  # <-- use namespaced path
+        {
+            "query": q,
+            "searched": searched,
+            "results": results,
+        },
+    )
 def search(request):
     query = request.GET.get("q", "")
     workorders = []
     if query:
         workorders = WorkOrder.objects.filter(id__iexact=query) | \
-                     WorkOrder.objects.filter(customer__phone__icontains=query) | \
+                     WorkOrder.objects.filter(customer__phone_number__icontains=query) | \
                      WorkOrder.objects.filter(customer__email__icontains=query)
     return render(request, "workshop/search.html", {"workorders": workorders, "query": query})
 

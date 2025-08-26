@@ -1,26 +1,76 @@
 {% extends "workshop/base.html" %}
+
 {% block title %}Welcome to Ethiofolks' Repair Shop{% endblock %}
 
 {% block content %}
 <div class="text-center">
   <h1 class="mb-4">Welcome to Ethiofolks' Repair Shop</h1>
   
-  <!-- Search Form -->
-  <form method="get" action="{% url 'workshop:search' %}" class="mb-5">
-    <div class="input-group mb-3">
-      <input type="text" name="q" class="form-control" placeholder="Enter: WorkOrder number/Phone/Email">
-      <button class="btn btn-primary" type="submit">Check Status</button>
-    </div>
+  <form method="get" action="{% url 'landing' %}" class="d-flex gap-2">
+    <input name="q" class="form-control" placeholder="email / phone number" value="{{ request.GET.q }}">
+    <button class="btn btn-primary" type="submit">Search</button>
   </form>
 
-  <!-- Welcome Content -->
-  <div class="landing">
+  <div class="landing mt-4">
     <h2>ወደ ጥገና ማዕከላችን ድረ-ገፅ እንኳን ደህና መጡ</h2>
     <h5>We Care for What You Care About</h5>
     
-    <a href="{% url 'admin:index' %}" class="btn btn-primary">
+    <a href="{% url 'admin:index' %}" class="btn btn-primary mt-2">
       Go to Admin Login
     </a>
   </div>
 </div>
+
+{% if searched %}
+  <div class="card mb-3 mt-5">
+    <div class="card-body">
+      {% if results %}
+        <h5 class="card-title mb-3">Search results for “{{ query }}”</h5>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>WO #</th>
+                <th>Customer</th>
+                <th>Product</th>
+                <th>Status</th>
+                <th>Total Cost</th>
+                <th>Repair Details</th>
+                <th>Reason (if not repaired)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for wo in results %}
+              <tr>
+                <td class="fw-semibold">{{ wo.work_order_number }}</td>
+                <td>
+                  {{ wo.customer.first_name }} {{ wo.customer.last_name }}<br>
+                  <small class="text-muted">{{ wo.customer.email }}</small>
+                </td>
+                <td>
+                  {% if wo.product_type %}{{ wo.product_type }}{% endif %}
+                  {% if wo.product_brand %}{% if wo.product_type %} - {% endif %}{{ wo.product_brand }}{% endif %}
+                  {% if wo.product_model %}{% if wo.product_type or wo.product_brand %} - {% endif %}{{ wo.product_model }}{% endif %}
+                </td>
+                <td><span class="badge bg-secondary">{{ wo.status|title }}</span></td>
+                <td>
+                  {% if wo.total_cost %}
+                    {{ wo.total_cost }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td style="max-width: 340px; white-space: pre-wrap;">{{ wo.repair_details|default:"—" }}</td>
+                <td style="max-width: 340px; white-space: pre-wrap;">{{ wo.reason_for_not_repairing|default:"—" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="mb-0">No results for “{{ query }}”.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
 {% endblock %}

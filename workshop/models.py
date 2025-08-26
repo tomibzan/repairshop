@@ -32,7 +32,7 @@ class Technician(models.Model):
 # ─────────────────────────────
 class WorkOrder(models.Model):
     customer = models.ForeignKey("Customer", on_delete=models.CASCADE)
-    product_type = models.CharField(max_length=100)
+    product_type = models.CharField(max_length=100, blank=True, null=True)
     product_brand = models.CharField(max_length=100)
     product_model = models.CharField(max_length=100)
     serial_number = models.CharField(max_length=100, blank=True, null=True)
@@ -68,24 +68,31 @@ class WorkOrder(models.Model):
         # Auto-generate work order number only once
         if not self.work_order_number:
             year = timezone.now().year
-            last_order = WorkOrder.objects.filter(
-                created_at__year=year
-            ).order_by("id").last()
-            
-            if last_order and last_order.work_order_number:
-                last_number = int(last_order.work_order_number.split("-")[-1])
-                new_number = last_number + 1
+             # find the last WO for this year
+            last_for_year = (
+                WorkOrder.objects
+                .filter(work_order_number__startswith=f"WO{year}")
+                .order_by("-id")
+                .first()
+            )
+            if last_for_year and len(last_for_year.work_order_number) >= 4:
+                # formats we accept: WO2025-1234 or WO20251234
+                tail = last_for_year.work_order_number.replace("-", "")[6:]  # after WOYYYY
+                last_num = int(tail) if tail.isdigit() else 1000
             else:
-                new_number = 1
+                last_num = 1000  # first becomes 1001
 
-            self.work_order_number = f"WO-{year}-{new_number:04d}"
+            new_num = last_num + 1
+            if new_num > 9999:
+                raise ValueError("Maximum work order number reached for this year (9999).")
+
+            # Pretty format: WOYYYY-#### (e.g., WO2025-1001)
+            self.work_order_number = f"WO{year}-{new_num:04d}"
 
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.work_order_number} - {self.customer}"
-
-
 # ─────────────────────────────
 # Product Image
 # ─────────────────────────────

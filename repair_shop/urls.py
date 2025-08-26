@@ -19,11 +19,11 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from workshop import views
+from workshop import views as workshop_views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", include("workshop.urls", namespace="workshop")),  #landing page
+    path("", workshop_views.landing, name="landing"),  #landing page
     path("api/", include("workshop.api_urls")),  # keep DRF separate
 ]
 
