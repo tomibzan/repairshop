@@ -1,11 +1,54 @@
 from django.contrib import admin
+from django.contrib.auth.models import User, Group
+from django.contrib.auth.admin import UserAdmin, GroupAdmin
+from django.urls import reverse
 from .models import Customer, Technician, WorkOrder, ProductImage, RemoteRequest
 from django.utils import timezone
 from django.db import transaction
+from django.utils.html import format_html
+from django.contrib.admin import AdminSite
 
-admin.site.site_header = "Ethiofolks Repair Shop Admin"   # The top bar header
-admin.site.site_title = "Repair Shop Admin Portal"        # The browser tab title
-admin.site.index_title = "Welcome to the Repair Shop Dashboard"  # Main index page text
+admin.site.site_header = "Ethiofolks Repair Shop Admin"
+admin.site.site_title = "Repair Shop Admin Portal" 
+admin.site.index_title = "Welcome to the Repair Shop Dashboard"
+
+class CustomAdminSite(AdminSite):
+    def get_app_list(self, request):
+        """
+        Return a sorted list of all the installed apps that have been
+        registered in this site.
+        """
+        app_dict = self._build_app_dict(request)
+        
+        # Sort the apps alphabetically
+        app_list = sorted(app_dict.values(), key=lambda x: x['name'].lower())
+        
+        # Custom ordering for workshop app models
+        for app in app_list:
+            if app['app_label'] == 'workshop':
+                # Define your desired order
+                desired_order = ['workorder', 'remoterequest', 'customer', 'technician']
+                
+                # Create a mapping for sorting
+                order_mapping = {model: index for index, model in enumerate(desired_order)}
+                
+                # Sort the models based on desired order
+                app['models'].sort(key=lambda x: order_mapping.get(x['object_name'].lower(), 999))
+        
+        return app_list
+
+custom_admin_site = CustomAdminSite(name='custom_admin')
+
+# ─────────────────────────────
+# REGISTER AUTH MODELS WITH CUSTOM ADMIN SITE
+# ─────────────────────────────
+@admin.register(User, site=custom_admin_site)
+class CustomUserAdmin(UserAdmin):
+    pass
+
+@admin.register(Group, site=custom_admin_site)
+class CustomGroupAdmin(GroupAdmin):
+    pass
 
 # ─────────────────────────────
 # Inline: Product Images
@@ -16,7 +59,10 @@ class ProductImageInline(admin.TabularInline):
     fields = ("image", "uploaded_at")
     readonly_fields = ("uploaded_at",)
 
-@admin.register(RemoteRequest)
+# ─────────────────────────────
+# RemoteRequest Admin
+# ─────────────────────────────
+@admin.register(RemoteRequest, site=custom_admin_site)
 class RemoteRequestAdmin(admin.ModelAdmin):
     list_display = ("customer_name", "customer_email", "customer_phone", "status", "created_at")
     list_filter = ("status", "preferred_tool", "created_at")
@@ -37,28 +83,29 @@ class RemoteRequestAdmin(admin.ModelAdmin):
         ("Timestamps", {
             "fields": ("created_at", "updated_at")
         }),
-    )    
-
+    )
 
 # ─────────────────────────────
 # Customer Admin
 # ─────────────────────────────
-@admin.register(Customer)
+@admin.register(Customer, site=custom_admin_site)
 class CustomerAdmin(admin.ModelAdmin):
     list_display = ("first_name", "last_name", "email", "phone_number")
     search_fields = ("first_name", "last_name", "email", "phone_number")
     ordering = ("first_name",)
 
-
 # ─────────────────────────────
 # Technician Admin
 # ─────────────────────────────
-@admin.register(Technician)
+@admin.register(Technician, site=custom_admin_site)
 class TechnicianAdmin(admin.ModelAdmin):
     list_display = ("first_name", "last_name", "email", "phone_number")
     search_fields = ("first_name", "last_name", "email", "phone_number")
     ordering = ("first_name",)
 
+# ─────────────────────────────
+# Overdue Filter
+# ─────────────────────────────
 class OverdueFilter(admin.SimpleListFilter):
     title = "Overdue Status"
     parameter_name = "overdue"
@@ -80,9 +127,9 @@ class OverdueFilter(admin.SimpleListFilter):
         return queryset
 
 # ─────────────────────────────
-# WorkOrder Admin (with images)
+# WorkOrder Admin
 # ─────────────────────────────
-@admin.register(WorkOrder)
+@admin.register(WorkOrder, site=custom_admin_site)
 class WorkOrderAdmin(admin.ModelAdmin):
     readonly_fields = ("work_order_number", "created_at", "updated_at")
     list_display = (
@@ -106,7 +153,6 @@ class WorkOrderAdmin(admin.ModelAdmin):
     mark_as_ready_for_pickup.short_description = "Mark selected orders as Ready for Pickup"
 
     def assign_to_technician(self, request, queryset):
-        # For now, just assign to the first technician (later we add a form for choosing)
         tech = Technician.objects.first()
         updated = queryset.update(technician=tech)
         self.message_user(request, f"{updated} work orders assigned to {tech}.")
@@ -131,6 +177,6 @@ class WorkOrderAdmin(admin.ModelAdmin):
             "customer_collected",
             "date_collected",
         ]
-        if obj:  # If editing an existing object, include read-only fields
+        if obj:
             fields = ["work_order_number", "created_at", "updated_at"] + fields
-        return fields 
+        return fields
