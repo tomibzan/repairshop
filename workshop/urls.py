@@ -13,7 +13,9 @@ router.register(r"images", ProductImageViewSet)
 
 urlpatterns = [
     path("", views.landing, name="landing"),
+    path("bulk-update/", views.landing_bulk_update, name="landing_bulk_update"),
     path("search/", views.search, name="search"),
+    path("workorders/", views.workorder_list, name="workorder_list"),
     path("workorder/<int:pk>/", views.workorder_detail, name="workorder_detail"),
     path("api/", include(router.urls)),
 ]

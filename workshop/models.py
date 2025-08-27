@@ -46,6 +46,7 @@ class WorkOrder(models.Model):
     estimated_completion_date = models.DateField(blank=True, null=True)
     reason_for_not_repairing = models.TextField(null=True, blank=True)
     date_collected = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)  # soft delete
     status = models.CharField(
         max_length=50,
         choices=[

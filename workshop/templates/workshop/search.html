@@ -1,18 +1,162 @@
 {% extends "workshop/base.html" %}
-{% block title %}Search Results{% endblock %}
+
+{% block title %}Work Order Search{% endblock %}
+
 {% block content %}
-  <h2>Work Order Results</h2>
-  {% if workorders %}
-    <ul class="list-group">
+<div class="card mb-4">
+  <div class="card-body">
+    <h4 class="card-title">Filter Work Orders</h4>
+    <form method="get" class="row g-2">
+      <!-- Keyword search -->
+      <div class="col-md-3">
+        <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="Name / Phone / Email / WO #">
+      </div>
+
+      <!-- Status filter -->
+      <div class="col-md-2">
+        <select name="status" class="form-select">
+          <option value="">All Statuses</option>
+          {% for choice in status_choices %}
+            <option value="{{ choice.0 }}" {% if request.GET.status == choice.0 %}selected{% endif %}>
+              {{ choice.1 }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Customer filter -->
+      <div class="col-md-2">
+        <input type="text" name="customer" value="{{ request.GET.customer }}" class="form-control" placeholder="Customer name">
+      </div>
+
+      <!-- Date range filter -->
+      <div class="col-md-2">
+        <input type="date" name="start_date" value="{{ request.GET.start_date }}" class="form-control">
+      </div>
+      <div class="col-md-2">
+        <input type="date" name="end_date" value="{{ request.GET.end_date }}" class="form-control">
+      </div>
+
+      <!-- Submit -->
+      <div class="col-md-1">
+        <button class="btn btn-primary w-100" type="submit">Filter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Results Table -->
+{% if workorders %}
+<div class="table-responsive">
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>WO #</th>
+        <th>Customer</th>
+        <th>Product</th>
+        <th>Status</th>
+        <th>Technician</th>
+        <th>Date In</th>
+        <th>Total Cost</th>
+      </tr>
+    </thead>
+    <tbody>
       {% for order in workorders %}
-        <li class="list-group-item">
-          <a href="{% url 'workshop:workorder_detail' order.id %}">
-            Work Order #{{ order.id }} – {{ order.status }}
-          </a>
-        </li>
+      <tr>
+        <td><a href="{% url 'workshop:workorder_detail' order.id %}">{{ order.work_order_number }}</a></td>
+        <td>{{ order.customer.first_name }} {{ order.customer.last_name }}</td>
+        <td>{{ order.product_brand }} {{ order.product_model }}</td>
+        <td><span class="badge bg-secondary">{{ order.status }}</span></td>
+        <td>{% if order.technician %}{{ order.technician.first_name }}{% else %}—{% endif %}</td>
+        <td>{{ order.date_received|date:"Y-m-d" }}</td>
+        <td>{{ order.total_cost|default:"—" }}</td>
+      </tr>
       {% endfor %}
-    </ul>
-  {% else %}
-    <p>No work orders found.</p>
-  {% endif %}
+    </tbody>
+  </table>
+</div>
+<nav aria-label="Page navigation">
+  <ul class="pagination justify-content-center">
+    {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}
+                                  {% if request.GET.status %}status={{ request.GET.status }}&{% endif %}
+                                  {% if request.GET.customer %}customer={{ request.GET.customer }}&{% endif %}
+                                  {% if request.GET.start_date %}start_date={{ request.GET.start_date }}&{% endif %}
+                                  {% if request.GET.end_date %}end_date={{ request.GET.end_date }}&{% endif %}
+                                  page={{ page_obj.previous_page_number }}">
+          Previous
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Previous</span></li>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+      {% if page_obj.number == num %}
+        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+      {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}
+                                  {% if request.GET.status %}status={{ request.GET.status }}&{% endif %}
+                                  {% if request.GET.customer %}customer={{ request.GET.customer }}&{% endif %}
+                                  {% if request.GET.start_date %}start_date={{ request.GET.start_date }}&{% endif %}
+                                  {% if request.GET.end_date %}end_date={{ request.GET.end_date }}&{% endif %}
+                                  page={{ page_obj.next_page_number }}">
+          Next
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Next</span></li>
+    {% endif %}
+  </ul>
+</nav><nav aria-label="Page navigation">
+  <ul class="pagination justify-content-center">
+    {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}
+                                  {% if request.GET.status %}status={{ request.GET.status }}&{% endif %}
+                                  {% if request.GET.customer %}customer={{ request.GET.customer }}&{% endif %}
+                                  {% if request.GET.start_date %}start_date={{ request.GET.start_date }}&{% endif %}
+                                  {% if request.GET.end_date %}end_date={{ request.GET.end_date }}&{% endif %}
+                                  page={{ page_obj.previous_page_number }}">
+          Previous
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Previous</span></li>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+      {% if page_obj.number == num %}
+        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+      {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}
+                                  {% if request.GET.status %}status={{ request.GET.status }}&{% endif %}
+                                  {% if request.GET.customer %}customer={{ request.GET.customer }}&{% endif %}
+                                  {% if request.GET.start_date %}start_date={{ request.GET.start_date }}&{% endif %}
+                                  {% if request.GET.end_date %}end_date={{ request.GET.end_date }}&{% endif %}
+                                  page={{ page_obj.next_page_number }}">
+          Next
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Next</span></li>
+    {% endif %}
+  </ul>
+</nav>
+{% else %}
+<p>No work orders found.</p>
+{% endif %}
 {% endblock %}

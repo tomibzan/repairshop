@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Customer, Technician, WorkOrder, ProductImage
+from django.utils import timezone
 
 admin.site.site_header = "Ethiofolks Repair Shop Admin"   # The top bar header
 admin.site.site_title = "Repair Shop Admin Portal"        # The browser tab title
@@ -34,6 +35,25 @@ class TechnicianAdmin(admin.ModelAdmin):
     search_fields = ("first_name", "last_name", "email", "phone_number")
     ordering = ("first_name",)
 
+class OverdueFilter(admin.SimpleListFilter):
+    title = "Overdue Status"
+    parameter_name = "overdue"
+
+    def lookups(self, request, model_admin):
+        return (("yes", "Overdue"), ("no", "On time"))
+
+    def queryset(self, request, queryset):
+        today = timezone.now().date()
+        if self.value() == "yes":
+            return queryset.filter(
+                estimated_completion_date__lt=today,
+                status__in=["pending", "in_progress"],
+            )
+        if self.value() == "no":
+            return queryset.filter(
+                estimated_completion_date__gte=today
+            )
+        return queryset
 
 # ─────────────────────────────
 # WorkOrder Admin (with images)
@@ -42,13 +62,31 @@ class TechnicianAdmin(admin.ModelAdmin):
 class WorkOrderAdmin(admin.ModelAdmin):
     readonly_fields = ("work_order_number", "created_at", "updated_at")
     list_display = (
-        "work_order_number", "customer", "status",
+        "work_order_number", "customer", "status", "is_active",
         "technician", "product_type", "created_at", "updated_at"
     )
-    list_filter = ("status", "created_at", "updated_at")
+    list_filter = ("status", "created_at", "updated_at", "is_active", OverdueFilter)
     search_fields = ("work_order_number", "customer__first_name", "customer__last_name")
+    actions = ["mark_as_completed", "mark_as_ready_for_pickup", "assign_to_technician"]
     ordering = ("-created_at",)
     inlines = [ProductImageInline]
+
+    def mark_as_completed(self, request, queryset):
+        updated = queryset.update(status="completed")
+        self.message_user(request, f"{updated} work orders marked as Completed.")
+    mark_as_completed.short_description = "Mark selected orders as Completed"
+
+    def mark_as_ready_for_pickup(self, request, queryset):
+        updated = queryset.update(status="ready_for_pickup")
+        self.message_user(request, f"{updated} work orders marked as Ready for Pickup.")
+    mark_as_ready_for_pickup.short_description = "Mark selected orders as Ready for Pickup"
+
+    def assign_to_technician(self, request, queryset):
+        # For now, just assign to the first technician (later we add a form for choosing)
+        tech = Technician.objects.first()
+        updated = queryset.update(technician=tech)
+        self.message_user(request, f"{updated} work orders assigned to {tech}.")
+    assign_to_technician.short_description = "Assign selected orders to first available Technician"
 
     def get_fields(self, request, obj=None):
         fields = [
