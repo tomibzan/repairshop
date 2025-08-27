@@ -46,6 +46,3 @@ db.sqlite3
 # Backup files
 *.bak
 *~
-.env
-__pycache__/
-*.pyc
