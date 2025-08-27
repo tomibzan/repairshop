@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
 
 # ─────────────────────────────
 # Customer
@@ -108,3 +109,47 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.work_order.work_order_number} ({self.id})"
+    
+class RemoteRequest(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending Review"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+        ("converted", "Converted to Work Order"),
+    ]
+
+    customer_name = models.CharField(max_length=255)
+    customer_email = models.EmailField()
+    customer_phone = models.CharField(max_length=20)
+    issue_description = models.TextField()
+    preferred_datetime = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=50, default="pending")
+    preferred_tool = models.CharField(
+        max_length=50,
+        choices=[
+            ("teamviewer", "TeamViewer"),
+            ("anydesk", "AnyDesk"),
+            ("rustdesk", "RustDesk"),
+        ],
+        blank=True,
+        null=True,
+    )
+    connection_id = models.CharField(
+        max_length=100, blank=True, null=True,
+        help_text="TeamViewer/AnyDesk/RustDesk ID"
+    )
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True) 
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="reviewed_remote_requests"
+    )
+
+    def __str__(self):
+        return f"Remote Request from {self.customer_name} ({self.customer_email})"
+

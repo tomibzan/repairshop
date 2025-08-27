@@ -6,12 +6,13 @@ from django.core.paginator import Paginator
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required, permission_required
 from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
-
-from .models import Customer, Technician, WorkOrder, ProductImage
+from .forms import RemoteRequestForm
+from .models import Customer, RemoteRequest, Technician, WorkOrder, ProductImage
 from .serializers import (
     CustomerSerializer,
     TechnicianSerializer,
@@ -21,8 +22,87 @@ from .serializers import (
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import WorkOrderFilter
 from django.urls import reverse
+from django.db import transaction
+
+def remote_service_request(request):
+    success_message = None
+    if request.method == "POST":
+        form = RemoteRequestForm(request.POST)
+        if form.is_valid():
+            form.save()
+            success_message = "Thank you! Your remote service request has been submitted successfully."
+            form = RemoteRequestForm() 
+    else:
+        form = RemoteRequestForm()
+    return render(request, "workshop/remote_request.html", {"form": form, "success_message": success_message})
+
+def remote_request_submit(request):
+    if request.method == "POST":
+        form = RemoteRequestForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Your remote service request has been submitted successfully! Our team will review it and contact you.")
+            return redirect("workshop:remote_request")
+    else:
+        form = RemoteRequestForm()
+    return render(request, "workshop/remote_request.html", {"form": form})
+
+def remote_request_create(request):
+    """Client submits a new remote service request"""
+    if request.method == "POST":
+        form = RemoteRequestForm(request.POST)
+        if form.is_valid():
+            remote_request = form.save()
+            messages.success(
+                request, 
+                f"Thank you {remote_request.name}! Your remote service request has been received."
+            )
+            return redirect("workshop:remote_request_thankyou")
+    else:
+        form = RemoteRequestForm()
+    return render(request, "workshop/remote_request_form.html", {"form": form})
+
+def remote_request_thankyou(request):
+    """Simple thank-you page after submission"""
+    return render(request, "workshop/remote_request_thankyou.html")
 
 
+
+@login_required
+@permission_required("workshop.change_remoterequest", raise_exception=True)
+def remote_request_list(request):
+    requests = RemoteRequest.objects.all().order_by("-created_at")
+    return render(request, "workshop/remote_request_list.html", {"requests": requests})
+
+
+@login_required
+@permission_required("workshop.change_remoterequest", raise_exception=True)
+def convert_remote_request(request, pk):
+    remote_req = get_object_or_404(RemoteRequest, pk=pk)
+
+    # Create or get customer
+    customer, _ = Customer.objects.get_or_create(
+        email=remote_req.email,
+        defaults={
+            "first_name": remote_req.customer_name.split(" ")[0],
+            "last_name": " ".join(remote_req.customer_name.split(" ")[1:]) or "",
+            "phone": remote_req.phone,
+        },
+    )
+
+    # Create WorkOrder
+    workorder = WorkOrder.objects.create(
+        customer=customer,
+        product_type="Remote Service",
+        repair_details=remote_req.issue_description,
+        status="new",
+    )
+
+    remote_req.status = "converted"
+    remote_req.save()
+
+    messages.success(request, f"Remote request converted to Work Order #{workorder.work_order_number}")
+    return redirect("workshop:remote_request_list")
 # ─────────────────────────────
 # Utility
 # ─────────────────────────────
@@ -46,6 +126,13 @@ def landing(request):
     q = request.GET.get("q", "").strip()
     results = []
     searched = False
+
+    form = RemoteRequestForm(request.POST or None)
+
+    if form.is_bound and form.is_valid():
+        form.save()
+        messages.success(request, "Your remote service request has been submitted!")
+        return redirect('workshop:landing')
 
     if q:
         searched = True
@@ -74,6 +161,7 @@ def landing(request):
             "query": q,
             "searched": searched,
             "results": results,
+            "form": form,
         },
     )
 

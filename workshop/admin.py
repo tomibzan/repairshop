@@ -1,6 +1,7 @@
 from django.contrib import admin
-from .models import Customer, Technician, WorkOrder, ProductImage
+from .models import Customer, Technician, WorkOrder, ProductImage, RemoteRequest
 from django.utils import timezone
+from django.db import transaction
 
 admin.site.site_header = "Ethiofolks Repair Shop Admin"   # The top bar header
 admin.site.site_title = "Repair Shop Admin Portal"        # The browser tab title
@@ -14,6 +15,29 @@ class ProductImageInline(admin.TabularInline):
     extra = 1
     fields = ("image", "uploaded_at")
     readonly_fields = ("uploaded_at",)
+
+@admin.register(RemoteRequest)
+class RemoteRequestAdmin(admin.ModelAdmin):
+    list_display = ("customer_name", "customer_email", "customer_phone", "status", "created_at")
+    list_filter = ("status", "preferred_tool", "created_at")
+    search_fields = ("customer_name", "customer_email", "customer_phone", "connection_id", "issue_description")
+    ordering = ("-created_at",)
+    readonly_fields = ("created_at", "updated_at")
+
+    fieldsets = (
+        ("Customer Info", {
+            "fields": ("customer_name", "customer_email", "customer_phone")
+        }),
+        ("Issue Details", {
+            "fields": ("issue_description", "preferred_tool", "connection_id")
+        }),
+        ("Workflow", {
+            "fields": ("status", "reviewed_by")
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at")
+        }),
+    )    
 
 
 # ─────────────────────────────

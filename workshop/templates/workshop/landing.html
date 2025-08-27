@@ -117,4 +117,18 @@
   </div>
 {% endif %}
 
+<!-- Remote Service Request Form -->
+<div class="card mt-5">
+  <div class="card-body">
+    <h4>Request Remote Service</h4>
+    <p>If you need help with software, setup, or troubleshooting, submit your request below. We’ll contact you to schedule remote support.</p>
+    
+    <form method="post" action="{% url 'workshop:remote_service_request' %}">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-primary">Submit Request</button>
+    </form>
+  </div>
+</div>
+
 {% endblock %}
