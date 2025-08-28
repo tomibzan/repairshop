@@ -23,6 +23,12 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .filters import WorkOrderFilter
 from django.urls import reverse
 from django.db import transaction
+from django.core.mail import send_mail
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from .utils import send_sms
+
 
 def remote_service_request(request):
     success_message = None
@@ -40,11 +46,63 @@ def remote_request_submit(request):
     if request.method == "POST":
         form = RemoteRequestForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Your remote service request has been submitted successfully! Our team will review it and contact you.")
+            remote_request = form.save()
+
+            # Shared context for both emails/SMS
+            context = {
+                "request": remote_request,
+                "customer_name": remote_request.customer_name,
+                "customer_contact": remote_request.customer_email or remote_request.customer_phone,
+                "issue_description": remote_request.issue_description,
+            }
+
+            # --- Customer Email ---
+            if remote_request.customer_email:
+                customer_subject = "We Received Your Remote Service Request"
+                customer_html = render_to_string(
+                    "workshop/email/remote_request_customer.html", context
+                )
+                customer_msg = EmailMultiAlternatives(
+                    customer_subject,
+                    "Plain text fallback for clients that don’t render HTML.",
+                    settings.DEFAULT_FROM_EMAIL,
+                    [remote_request.customer_email],
+                )
+                customer_msg.attach_alternative(customer_html, "text/html")
+                customer_msg.send()
+            elif remote_request.customer_phone:
+                # SMS fallback if email is not provided
+                sms_message = (
+                    f"Hi {remote_request.customer_name}, "
+                    f"we received your service request. Issue: "
+                    f"{remote_request.issue_description[:100]}..."
+                )
+                send_sms(remote_request.customer_phone, sms_message)
+
+            # --- Admin Email ---
+            admin_subject = f"New Remote Service Request from {remote_request.customer_name}"
+            admin_html = render_to_string(
+                "workshop/email/remote_request_admin.html", context
+            )
+            admin_msg = EmailMultiAlternatives(
+                admin_subject,
+                "New request submitted.",
+                settings.DEFAULT_FROM_EMAIL,
+                ["yourgmail@gmail.com"],  # TODO: replace with actual admin/staff email
+            )
+            admin_msg.attach_alternative(admin_html, "text/html")
+            admin_msg.send()
+
+            # Feedback to user
+            messages.success(
+                request,
+                "Your remote service request has been submitted successfully! "
+                "Our team will review it and contact you."
+            )
             return redirect("workshop:remote_request")
     else:
         form = RemoteRequestForm()
+
     return render(request, "workshop/remote_request.html", {"form": form})
 
 def remote_request_create(request):

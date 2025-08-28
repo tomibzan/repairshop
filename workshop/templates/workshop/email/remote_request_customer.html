@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; color: #333; }
+    .container { max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; }
+    .header { background: #4CAF50; color: white; padding: 10px; text-align: center; }
+    .content { margin-top: 20px; }
+    .footer { margin-top: 30px; font-size: 12px; color: #888; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>Repair Shop - Remote Service Request</h2>
+    </div>
+    <div class="content">
+      <p>Dear {{ customer_name }},</p>
+      <p>We have received your remote service request.</p>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li>Email/Phone: {{ customer_contact }}</li>
+        <li>Issue: {{ issue_description }}</li>
+      </ul>
+      <p>Our team will contact you shortly.</p>
+    </div>
+    <div class="footer">
+      <p>Repair Shop • Support Team</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .header { background: #f4f4f4; padding: 20px; text-align: center; }
+        .content { padding: 20px; }
+        .status { font-weight: bold; color: #007bff; }
+        .footer { background: #f4f4f4; padding: 10px; text-align: center; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Ethiofolks Repair Shop</h2>
+    </div>
+    
+    <div class="content">
+        <p>Dear {{ customer_name }},</p>
+        
+        <p>The status of your service request <strong>#{{ workorder.work_order_number }}</strong> 
+           has been updated to: <span class="status">{{ status|title }}</span></p>
+        
+        {% if workorder.repair_details %}
+        <p><strong>Repair Details:</strong><br>{{ workorder.repair_details }}</p>
+        {% endif %}
+        
+        {% if workorder.total_cost %}
+        <p><strong>Total Cost:</strong> ${{ workorder.total_cost }}</p>
+        {% endif %}
+        
+        <p>Thank you for choosing Ethiofolks Repair Shop!</p>
+    </div>
+    
+    <div class="footer">
+        <p>This is an automated message. Please do not reply to this email.</p>
+    </div>
+</body>
+</html>

@@ -8,12 +8,31 @@ from django.db import transaction
 from django.utils.html import format_html
 from django.contrib.admin import AdminSite
 
-admin.site.site_header = "Ethiofolks Repair Shop Admin"
-admin.site.site_title = "Repair Shop Admin Portal" 
-admin.site.index_title = "Welcome to the Repair Shop Dashboard"
+
 
 class CustomAdminSite(AdminSite):
-    def get_app_list(self, request):
+    site_header = "Ethiofolks Repair Shop Admin"
+    site_title = "Repair Shop Admin Portal" 
+    index_title = "Welcome to the Repair Shop Dashboard"
+
+custom_admin_site = CustomAdminSite(name='custom_admin')
+
+def send_status_email_action(self, request, queryset):
+    """Admin action to manually send status emails"""
+    from .utils import send_status_update_email
+    
+    sent_count = 0
+    for workorder in queryset:
+        if send_status_update_email(workorder):
+            sent_count += 1
+    
+    self.message_user(request, f"Status emails sent to {sent_count} customers.")
+send_status_email_action.short_description = "Send status email to selected customers"
+
+# Add to your actions list
+actions = ["mark_as_completed", "mark_as_ready_for_pickup", "assign_to_technician", "send_status_email_action"]
+
+def get_app_list(self, request, app_label=None):
         """
         Return a sorted list of all the installed apps that have been
         registered in this site.
@@ -35,9 +54,9 @@ class CustomAdminSite(AdminSite):
                 # Sort the models based on desired order
                 app['models'].sort(key=lambda x: order_mapping.get(x['object_name'].lower(), 999))
         
-        return app_list
+        return super().get_app_list(request, app_label)
 
-custom_admin_site = CustomAdminSite(name='custom_admin')
+
 
 # ─────────────────────────────
 # REGISTER AUTH MODELS WITH CUSTOM ADMIN SITE
