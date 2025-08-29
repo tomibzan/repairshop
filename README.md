@@ -52,5 +52,13 @@ A Django-based web application designed to streamline operations for electronics
 
 ### 1. Clone the Repository
 ```bash
-git clone git@github.com:tomibzan/repairshop.git
-cd repair-shop
+1. git clone git@github.com:tomibzan/repairshop.git
+   cd repair-shop
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+3. python manage.py migrate 
+4. python manage.py runserver  
+
+   The project works out-of-the-box with defaults.
+If you want custom settings, copy .env.example to .env and edit values.
