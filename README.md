@@ -53,7 +53,7 @@ A Django-based web application designed to streamline operations for electronics
 ### 1. Clone the Repository
 ```bash
 1. git clone git@github.com:tomibzan/repairshop.git
-   cd repair-shop
+   cd repair-shop & set up your favorite venv
 2. Install dependencies:
    ```bash
    pip install -r requirements.txt
