@@ -65,9 +65,9 @@ class WorkOrderSerializer(serializers.ModelSerializer):
             "total_cost",
             "status",
             "customer_collected",
-            "date_created",
-            "date_updated",
+            "created_at",
+            "updated_at",
             "date_collected",
             "images",
         ]
-        read_only_fields = ["work_order_number", "date_created", "date_updated"]
+        read_only_fields = ["work_order_number", "created_at", "updated_at"]

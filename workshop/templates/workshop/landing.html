@@ -21,16 +21,25 @@
   <h1>Welcome to Ethiofolks' Repair Shop</h1>
 
   <!-- Search Form -->
-  <form method="get" action="{% url 'workshop:landing' %}" class="d-flex gap-2 justify-content-center">
+  <form method="get" action="{% url 'workshop:landing' %}" class="d-flex flex-column align-items-center gap-2">
+  
+  <!-- Label above input -->
+  <label for="workorder-search" class="fw-semibold">Check Your Work Order Status</label>
+  
+  <div class="d-flex gap-2 w-50">
     <input
+      id="workorder-search"
       name="q"
-      class="form-control w-50"
-      placeholder="email / phone number"
+      class="form-control"
+      placeholder="Enter your email or phone number"
       value="{{ query|default:'' }}"
     >
     <button class="btn btn-primary" type="submit">Search</button>
-  </form>
+  </div>
 
+  <!-- Optional small hint below -->
+  <small class="text-muted mt-1">Use the email or phone number you provided when submitting your repair request.</small>
+  </form>
   <div class="mt-3">
     <h5>We Care for What You Care About</h5>
     <a href="{% url 'admin:index' %}" class="btn btn-secondary mt-2">Admin Login</a>

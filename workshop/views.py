@@ -408,8 +408,8 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
         "product_brand",
         "serial_number",
     ]
-    ordering_fields = ["date_created", "status", "product_brand", "total_cost"]
-    ordering = ["-date_created"]
+    ordering_fields = ["created_at", "status", "product_brand", "total_cost"]
+    ordering = ["-created_at"]
 
     @action(detail=True, methods=["post"])
     def mark_repaired(self, request, pk=None):
