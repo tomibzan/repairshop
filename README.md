@@ -55,12 +55,13 @@ A Django-based web application designed to streamline operations for electronics
 1. git clone git@github.com:tomibzan/repairshop.git
 2. cd repair-shop
 3. python -m venv venv && source venv/bin/activate
-2. Install dependencies:
+4. Install dependencies:
    ```bash
    pip install -r requirements.txt
-4. For testing: cp .env.example .env   
-3. python manage.py migrate 
-4. python manage.py runserver  
-
+5. For testing: cp .env.example .env   
+6. python manage.py migrate 
+7. python manage.py createsuperuser  -> to explore repairshop backend
+8. python manage.py runserver
+9. type localhost:8000 in a web browser 
    The project works out-of-the-box with defaults.
 If you want custom settings, after copying .env.example to .env edit values.
