@@ -1,39 +1,74 @@
 # Repair Shop Management System
 
-A Django-based web application designed to streamline operations for electronics and general repair shops. The system tracks work orders, customer information, product details, repair progress, and technician assignments — all in one place.
-
-🔧 **Built for efficiency, transparency, and accountability in repair workflows.**
+A Django-based web application to streamline operations for electronics and general repair shops.  
+The system manages work orders, customer information, product details, repair progress, and technician assignments.
 
 ---
 
-## 📋 Features
+## Features
 
-- ✅ **Work Order Management**  
-  Create, view, update, and close repair jobs with unique tracking IDs.
+- Work Order Management: create, view, update, and close repair jobs with unique tracking IDs.
+- Customer Information: securely store customer contact details.
+- Product Registration: log received devices (laptops, phones, appliances) with model, serial number, and condition.
+- Problem Description: record issue reports from customers.
+- Repair Progress Tracking: update job status (`Received` → `Diagnosed` → `In Progress` → `Waiting for Parts` → `Completed`).
+- Technician Assignment: assign technicians to specific jobs.
+- RESTful API (via DRF): endpoints for customers, technicians, and work orders.
+- Admin Dashboard: Django admin interface for managing data.
+- Search & Filter: find work orders by ID, customer name, device, or status.
 
-- ✅ **Customer & Owner Information**  
-  Store customer contact details securely.
+---
 
-- ✅ **Product Registration**  
-  Log received devices (e.g., laptops, phones, appliances) with model, serial number, and condition.
+## Tech Stack
 
-- ✅ **Problem Description**  
-  Record detailed issue reports from customers.
+- Backend: Python 3 + Django  
+- API: Django REST Framework (DRF)  
+- Database: PostgreSQL (recommended), SQLite (development)  
+- Frontend: Django Templates (optional future integration with React/Vue)  
+- Authentication: Django built-in (extendable with JWT)  
+- Environment management: `.env` support  
 
-- ✅ **Repair Progress Tracking**  
-  Update job status: `Received` → `Diagnosed` → `In Progress` → `Waiting for Parts` → `Completed`.
+---
 
-- ✅ **Technician Assignment**  
-  Assign qualified technicians to specific jobs.
+## API Endpoints
 
-- ✅ **RESTful API (via DRF)**  
-  Full API support for mobile apps or external integrations.
+Base URL (local): `http://127.0.0.1:8000/api/`  
+Base URL (server): `http://ethiofox.click/api/`
 
-- ✅ **Admin Dashboard**  
-  Built-in Django admin for easy data management.
+**Customers**
+- `GET /customers/` – List customers
+- `POST /customers/` – Create new customer
+- `GET /customers/{id}/` – Retrieve a customer
+- `PUT /customers/{id}/` – Update customer
+- `DELETE /customers/{id}/` – Delete customer
 
-- ✅ **Search & Filter**  
-  Quickly find work orders by ID, customer name, device, or status.
+**Technicians**
+- `GET /technicians/` – List technicians
+- `POST /technicians/` – Add technician
+- `GET /technicians/{id}/` – Retrieve technician
+- `PUT /technicians/{id}/` – Update technician
+- `DELETE /technicians/{id}/` – Delete technician
+
+**Work Orders**
+- `GET /workorders/` – List work orders
+- `POST /workorders/` – Create new work order
+- `GET /workorders/{id}/` – Retrieve work order
+- `PUT /workorders/{id}/` – Update work order
+- `DELETE /workorders/{id}/` – Delete work order
+
+---
+
+## Error Handling
+
+- **400 Bad Request** – invalid input  
+- **404 Not Found** – resource not available  
+- **500 Internal Server Error** – unexpected issue  
+
+Example:
+```json
+{
+  "detail": "Not found."
+}
 
 ---
 
