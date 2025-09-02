@@ -40,7 +40,7 @@ Base URL (server): `http://ethiofox.click/api/`
 - `POST /customers/` – Create new customer
 - `GET /customers/{id}/` – Retrieve a customer
 - `PUT /customers/{id}/` – Update customer
-- `DELETE /customers/{id}/` – Delete customer
+- `DELETE api/customers/{id}/` – Delete customer
 
 **Technicians**
 - `GET /technicians/` – List technicians
@@ -55,6 +55,12 @@ Base URL (server): `http://ethiofox.click/api/`
 - `GET /workorders/{id}/` – Retrieve work order
 - `PUT /workorders/{id}/` – Update work order
 - `DELETE /workorders/{id}/` – Delete work order
+
+**Images**
+- `GET /images/` – List all uploaded images
+- `POST /images/` – Upload a new image (attach to work order)
+- `GET /images/{id}/` – Retrieve an image
+- `DELETE /images/{id}/` – Remove an image
 
 ---
 
@@ -72,16 +78,6 @@ Example:
 
 ---
 
-## 🛠️ Tech Stack
-
-- **Backend**: Python 3 + Django
-- **API**: Django REST Framework (DRF)
-- **Database**: PostgreSQL (recommended), SQLite (dev)
-- **Frontend**: Django Templates (optional: integrate with React/Vue later)
-- **Authentication**: Django built-in (extendable with JWT)
-- **Deployment Ready**: Gunicorn, Whitenoise, `.env` support
-
----
 
 ## 🚀 Quick Start (Local Setup)
 
